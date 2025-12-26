@@ -2,8 +2,8 @@
   "name": "html-css-tamil",
   "displayName": "HTML/CSS Tamil",
   "description": "The full-featured HTML & CSS programming language for Tamil speakers.",
-  "version": "1.0.1",
-  "publisher": "Mehanth",
+  "version": "1.0.3",
+  "publisher": "Itz-mehanth",
   "icon": "images/extension_icon.png",
   "engines": {
     "vscode": "^1.90.0"
@@ -25,7 +25,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Start-Up-TN-Hackathon/Tamil-HTML"
+    "url": "https://github.com/Itz-mehanth/Tamil-HTML-CSS.git"
   },
   "activationEvents": [],
   "main": "./out/extension.js",

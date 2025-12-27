@@ -69,7 +69,9 @@ function activate(context) {
         }
         try {
             // 1. Compile in memory
-            const compiledHtml = (0, compiler_1.compile)(editor.document.getText());
+            let compiledHtml = (0, compiler_1.compile)(editor.document.getText());
+            // 1b. Inline TCSS (Fix: Was missing in Run command, only present in Preview)
+            compiledHtml = processTcssLinks(compiledHtml, editor.document.fileName);
             // 2. Add <base> tag so local images/css work from the temp location
             // We insert it right after <head> or at the top if no head exists
             const folderPath = path.dirname(editor.document.fileName);
@@ -79,7 +81,9 @@ function activate(context) {
                 : `${baseTag}\n${compiledHtml}`;
             // 3. Write to a TEMP file (hidden from user workspace)
             const tempDir = os.tmpdir();
-            const tempFileName = `preview_${path.basename(editor.document.fileName)}.html`;
+            // Fix: Use path.parse to get name without extension, avoiding .thtml.html
+            const pName = path.parse(editor.document.fileName).name;
+            const tempFileName = `preview_${pName}.html`;
             const tempFilePath = path.join(tempDir, tempFileName);
             fs.writeFileSync(tempFilePath, finalHtml);
             // 4. Open the TEMP file in browser

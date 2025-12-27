@@ -37,96 +37,116 @@ THTML bridges the digital divide by enabling millions of Tamil speakers to build
 
 ---
 
-## 🚀 Usage Guide
+## 🚀 Documentation
 
-### 1. Creating a Page (`.thtml`)
+### 1. Basic Structure (`.thtml`)
 
-Create a new file ending in `.thtml`. Start typing `<` and see the magic of Tamil IntelliSense.
+Start by typing `thtml` and pressing Enter to get a full boilerplate.
 
 ```xml
 <பக்கம்>
   <தலை>
     <தலைப்பு>My Website</தலைப்பு>
-    <பாணி>
-       /* Embedded Tamil CSS */
-       வகுப்பு_box {
-          நிறம்: சிவப்பு;
-       }
-    </பாணி>
+    <!-- External CSS Link -->
+    <தொடுப்பு உறவு="stylesheet" முகவரி="style.tcss" />
   </தலை>
   <உடல்>
-    <தலைப்பாகம்>
-       <தலைப்பு1>வணக்கம் உலகம்! (Hello World)</தலைப்பு1>
-    </தலைப்பாகம்>
-
-    <களம் வகுப்பு="box">
-       <பத்தி>இது ஒரு தமிழ் இணையதளம்.</பத்தி>
-    </களம்>
+    <தலைப்பு1>வணக்கம்!</தலைப்பு1>
   </உடல்>
 </பக்கம்>
 ```
 
-### 2. Styling (`.tcss`)
+### 2. Embedded CSS & Linking (`<பாணி>`)
 
-Create a styling file ending in `.tcss`.
+You can write Tamil CSS directly inside your HTML. You can also import external files.
+
+```xml
+<பாணி>
+   /* 1. Import External File */
+   @இறக்குமதி "style.tcss";
+
+   /* 2. Write Direct Styles */
+   வகுப்பு_button {
+      பின்புலம்: நீளம்;
+      நிறம்: வெள்ளை;
+      எல்லை_ஆரம்: 5px;
+   }
+</பாணி>
+```
+
+### 3. External CSS (`.tcss`)
+
+Create a separate file (e.g., `style.tcss`) to keep your code clean.
 
 ```css
-/* Universal Selector */
-எல்லாம் {
-  விளிம்பு: 0;
+/* Select by Class (.box) */
+வகுப்பு_box {
+  அகலம்: 100%;
+  உள்வெளி: 20px;
 }
 
-/* Class Selector (Matches class="ப்பெட்டி") */
-வகுப்பு_ப்பெட்டி {
-  அகலம்: 100px;
-  உயரம்: 100px;
-  பின்னணி: நீளம்;
-}
-
-/* Flexbox */
+/* Select by ID (#main) */
 அடையாளம்_main {
-  காட்சி: கூட்டம்; /* display: flex */
-  திசை: நெடுவரிசை; /* flex-direction: column */
+  பின்புலம்: சாம்பல்;
+}
+
+/* Pseudo-classes (:hover) */
+வகுப்பு_box: சுட்டி_மேல் {
+  பின்புலம்: சிவப்பு;
 }
 ```
 
-### 3. Running & Compiling
+### 4. Running & Compiling
 
-- **Compiling**: Just save your file! (Note: Current version auto-compiles in memory for cleaner workspaces).
-- **Preview**: Click the **Run** button (▶️) or the **Preview** icon in the editor title bar to see your website live!
+- **Compile**: Just save the file. The extension handles everything in memory.
+- **Preview**: Click the **Run** button (▶️) or use the **Preview** command.
+
+---
+
+## ⚡ Code Snippets (குறுக்குவழிகள்)
+
+Type these prefixes and press `Enter` to auto-generate code:
+
+| Prefix             | Description          | Output                    |
+| :----------------- | :------------------- | :------------------------ |
+| `thtml`            | **HTML Boilerplate** | Full `<பக்கம்>` structure |
+| `link-tcss`        | **Link CSS**         | `<தொடுப்பு ... />`        |
+| `style-tcss`       | **Embedded CSS**     | `<பாணி> ... </பாணி>`      |
+| `div-thtml`        | **Div Block**        | `<களம்> ... </களம்>`      |
+| `img-thtml`        | **Image**            | `<படம் ... />`            |
+| `input-thtml`      | **Input**            | `<உள்ளீடு ... />`         |
+| `table-thtml`      | **Table**            | Full Table Structure      |
+| `flex-center-tcss` | **Flex Center**      | Centers items (CSS)       |
+| `media-tcss`       | **Media Query**      | Responsive Block          |
 
 ---
 
 ## 📚 Quick Reference (அகராதி)
 
-### HTML Tags
+### HTML Tags & Attributes
 
-| Tamil       | English  | Description     |
-| :---------- | :------- | :-------------- |
-| `<பக்கம்>`  | `<html>` | Root element    |
-| `<உடல்>`    | `<body>` | Visible content |
-| `<களம்>`    | `<div>`  | Division        |
-| `<படம்>`    | `<img>`  | Image           |
-| `<இணைப்பு>` | `<a>`    | Link/Anchor     |
+| Tamil        | English  | Description          |
+| :----------- | :------- | :------------------- |
+| `<பக்கம்>`   | `<html>` | Root Element         |
+| `<தலை>`      | `<head>` | Metadata Container   |
+| `<உடல்>`     | `<body>` | Visible Content      |
+| `<களம்>`     | `<div>`  | Division / Container |
+| `<தொடுப்பு>` | `<link>` | Link Resource        |
+| `வகுப்பு`    | `class`  | Class Attribute      |
+| `அடையாளம்`   | `id`     | ID Attribute         |
+| `முகவரி`     | `href`   | URL / Reference      |
 
 ### CSS Properties
 
 | Tamil          | English      |
 | :------------- | :----------- |
 | `நிறம்`        | `color`      |
-| `பின்னணி`      | `background` |
+| `பின்புலம்`    | `background` |
 | `எழுத்து_அளவு` | `font-size`  |
 | `விளிம்பு`     | `margin`     |
 | `உள்வெளி`      | `padding`    |
-
-### Attributes
-
-| Tamil      | English |
-| :--------- | :------ |
-| `வகுப்பு`  | `class` |
-| `அடையாளம்` | `id`    |
-| `பாதை`     | `src`   |
-| `இணைப்பு`  | `href`  |
+| `காட்சி`       | `display`    |
+| `கூட்டம்`      | `flex`       |
 
 ---
 
@@ -134,7 +154,7 @@ Create a styling file ending in `.tcss`.
 
 This project is open-source! We welcome contributions from the community to expand the vocabulary and improve the compiler.
 
-**Repository**: [GitHub Link]
+**Repository**: [https://github.com/Itz-mehanth/Tamil-HTML-CSS](https://github.com/Itz-mehanth/Tamil-HTML-CSS)  
 **License**: MIT
 
 ---

@@ -2,8 +2,8 @@
   "name": "html-css-tamil",
   "displayName": "HTML/CSS Tamil",
   "description": "The full-featured HTML & CSS programming language for Tamil speakers.",
-  "version": "1.0.3",
-  "publisher": "Itz-mehanth",
+  "version": "1.0.8",
+  "publisher": "Mehanth",
   "icon": "images/extension_icon.png",
   "engines": {
     "vscode": "^1.90.0"
@@ -30,6 +30,12 @@
   "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "snippets": [
+      {
+        "language": "thtml",
+        "path": "./snippets.json"
+      }
+    ],
     "languages": [
       {
         "id": "thtml",
@@ -40,7 +46,11 @@
         "extensions": [
           ".thtml"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/thtml_logo.png",
+          "dark": "./images/thtml_logo.png"
+        }
       },
       {
         "id": "tcss",
@@ -51,7 +61,11 @@
         "extensions": [
           ".tcss"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./images/tcss_logo.png",
+          "dark": "./images/tcss_logo.png"
+        }
       }
     ],
     "grammars": [

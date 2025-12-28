@@ -52,7 +52,7 @@
     ],
     "description": "Embedded Tamil CSS block"
   },
-  "Tamile Image": {
+  "Tamil Image": {
     "prefix": "img-thtml",
     "body": [
       "<படம் பாதை=\"${1:image.jpg}\" மாற்று=\"${2:Alt Text}\" அகலம்=\"${3:100%}\" />"
@@ -141,5 +141,38 @@
       "}"
     ],
     "description": "Responsive Media Query"
+  },
+  "Tamil Video": {
+    "prefix": "video-thtml",
+    "body": [
+      "<காணொளி பாதை=\"${1:video.mp4}\" தானே_இயங்கு கட்டுப்பாடு மீண்டும்>",
+      "  <மூலம் பாதை=\"${1:video.mp4}\" வகை=\"video/mp4\" />",
+      "  உங்கள் உலாவி காணொளியை ஆதரிக்கவில்லை.",
+      "</காணொளி>"
+    ],
+    "description": "Insert a Video tag with autoplay and controls"
+  },
+  "Tamil Audio": {
+    "prefix": "audio-thtml",
+    "body": [
+      "<ஒலி பாதை=\"${1:audio.mp3}\" கட்டுப்பாடு>",
+      "  <மூலம் பாதை=\"${1:audio.mp3}\" வகை=\"audio/mpeg\" />",
+      "</ஒலி>"
+    ],
+    "description": "Insert an Audio tag with controls"
+  },
+  "CSS Transition": {
+    "prefix": "transition-tcss",
+    "body": [
+      "மென்மாற்றம்: ${1:அனைத்தும்} ${2:0.3s};"
+    ],
+    "description": "Tamil CSS Transition"
+  },
+  "CSS Transform": {
+    "prefix": "transform-tcss",
+    "body": [
+      "வடிவ_மாற்றம்: ${1:scale(1.2)};"
+    ],
+    "description": "Tamil CSS Transform"
   }
 }

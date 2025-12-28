@@ -17,7 +17,7 @@ export const htmlMap: Record<string, string> = {
   "கட்டுரை": "article",
   "ஓரம்": "aside",
   "முக்கியம்": "main",
-  
+
   // --- Headings ---
   "தலைப்பு1": "h1",
   "தலைப்பு2": "h2",
@@ -84,7 +84,7 @@ export const htmlMap: Record<string, string> = {
   "விவரங்கள்": "details",
   "சுருக்கம்": "summary",
   "உரையாடல்": "dialog",
-  
+
   // --- HTML Attributes ---
   "வகுப்பு": "class",
   "அடையாளம்": "id",
@@ -99,7 +99,19 @@ export const htmlMap: Record<string, string> = {
   "பெயர்": "name",
   "செயல்": "action",
   "முறை": "method",
-  "இலக்கு": "target"
+  "இலக்கு": "target",
+
+  // --- Media Attributes ---
+  "கட்டுப்பாடு": "controls",
+  "மீண்டும்": "loop",
+  "தானே_இயங்கு": "autoplay",
+  "ஒலியடக்கு": "muted",
+  "முன்பதிவேற்றம்": "preload",
+  "சுவரொட்டி": "poster",
+
+  // --- Form Attributes ---
+  "மதிப்பு": "value",
+  "தேவை": "required"
 };
 
 export const cssMap: Record<string, string> = {
@@ -131,6 +143,11 @@ export const cssMap: Record<string, string> = {
   "கீழ்": "bottom", // Context aware: in CSS values/props only
   "இடது": "left",
   "வலது": "right",
+  "பெட்டி_அளவு": "box-sizing",
+  "பொருள்_பொருத்தம்": "object-fit",
+  "ஒளிபுகுதன்மை": "opacity",
+  "வடிவ_மாற்றம்": "transform", // transform (சுழற்றுவது, அளவை மாற்றுவது - rotate/scale)
+  "மென்மாற்றம்": "transition", // transition - மென்மையான நிலை மாற்றம்
 
   // --- Flexbox ---
   "கூட்டம்": "flex",
@@ -184,27 +201,27 @@ export const cssMap: Record<string, string> = {
   "ஆரஞ்சு": "orange",
   "சாம்பல்": "gray",
   "வெளிப்படை": "transparent",
-  
+
   "திட": "solid",
   "கோடு_கோடாக": "dashed",
   "புள்ளி": "dotted",
   "இரட்டை": "double",
-  
+
   "மையம்": "center",
   "நியாயப்படுத்து": "justify",
-  
+
   "நிரல்_வரிசை": "block",
   "வரிசை_முறை": "inline",
   "வரிசை_நிரல்": "inline-block",
   "இல்லை": "none",
   "மறை": "hidden",
   "காணு": "visible",
-  
+
   "சார்பு": "relative",
   "தனி": "absolute",
   "நிலையான": "fixed",
   "ஒட்டும்": "sticky",
-  
+
   "கரம்": "pointer",
   "சுட்டி": "cursor",
 
@@ -214,7 +231,7 @@ export const cssMap: Record<string, string> = {
   "அடையாளம்_": "#",       // ID with separator
   "அடையாளம்": "#",        // ID without separator
   "எல்லாம்": "*",          // Universal
-  
+
   ":சுட்டி_மேல்": ":hover",
   ":செயலில்": ":active",
   ":கவனம்": ":focus",
@@ -227,7 +244,7 @@ export const cssMap: Record<string, string> = {
   // --- Units/Misc ---
   "முக்கியம்!": "!important",
   "தானியங்கி": "auto",
-  
+
   // --- Media Queries ---
   "@ஊடகம்": "@media",
   "@இறக்குமதி": "@import",
@@ -247,8 +264,8 @@ export function compile(code: string): string {
     // Replace CSS keys inside the quotes only
     const sortedCss = Object.keys(cssMap).sort((a, b) => b.length - a.length);
     for (const k of sortedCss) {
-        // Global replace inside the style string
-        styleContent = styleContent.split(k).join(cssMap[k]);
+      // Global replace inside the style string
+      styleContent = styleContent.split(k).join(cssMap[k]);
     }
     return `${field}="${styleContent}"`;
   });
@@ -257,14 +274,14 @@ export function compile(code: string): string {
   // Must happen BEFORE global HTML replacement to preserve selectors if they match HTML tags
   // Regex updated to handle attributes: <பாணி ...> content </பாணி>
   html = html.replace(/<(பாணி|style)([^>]*)>([\s\S]*?)<\/(பாணி|style)>/g, (match, tag, attrs, content, closeTag) => {
-      // tag: "பாணி" or "style"
-      // attrs: attributes string (e.g. ' type="text/css"')
-      // content: the css code
-      // closeTag: "பாணி" or "style"
-      
-      // We compile the content. We leave the tag/attrs alone; 
-      // Step 3 (Global HTML) will rename "பாணி" to "style" in the tag itself.
-      return `<${tag}${attrs}>${compileCSS(content)}</${closeTag}>`;
+    // tag: "பாணி" or "style"
+    // attrs: attributes string (e.g. ' type="text/css"')
+    // content: the css code
+    // closeTag: "பாணி" or "style"
+
+    // We compile the content. We leave the tag/attrs alone; 
+    // Step 3 (Global HTML) will rename "பாணி" to "style" in the tag itself.
+    return `<${tag}${attrs}>${compileCSS(content)}</${closeTag}>`;
   });
 
   // 3. Process HTML Tags (Global)
@@ -272,7 +289,7 @@ export function compile(code: string): string {
   const sortedKeys = Object.keys(htmlMap).sort((a, b) => b.length - a.length);
 
   for (const k of sortedKeys) {
-    html = html.split(k).join(htmlMap[k]); 
+    html = html.split(k).join(htmlMap[k]);
   }
 
 
@@ -285,14 +302,14 @@ export function compileCSS(code: string): string {
   let css = code;
   // Sort CSS keys by length
   const sortedCss = Object.keys(cssMap).sort((a, b) => b.length - a.length);
-  
+
   for (const k of sortedCss) {
-      css = css.split(k).join(cssMap[k]);
+    css = css.split(k).join(cssMap[k]);
   }
 
   const sortedHtml = Object.keys(htmlMap).sort((a, b) => b.length - a.length);
   for (const k of sortedHtml) {
-      css = css.split(k).join(htmlMap[k]);
+    css = css.split(k).join(htmlMap[k]);
   }
 
   return css;

@@ -33,7 +33,7 @@
       "patterns": [
         {
           "name": "entity.other.attribute-name.thtml",
-          "match": "\\b(id|class|src|href|rel|type|width|height|alt|title|வகுப்பு|அடையாளம்|பாதை|முகவரி|வகை|அகலம்|உயரம்|மாற்று|உறவு|இடக்காட்டி|பெயர்|செயல்|முறை|இலக்கு)\\b"
+          "match": "\\b(id|class|src|href|rel|type|width|height|alt|title|வகுப்பு|அடையாளம்|பாதை|முகவரி|வகை|அகலம்|உயரம்|மாற்று|உறவு|இடக்காட்டி|பெயர்|செயல்|முறை|இலக்கு|கட்டுப்பாடு|மீண்டும்|தானே_இயங்கு|ஒலியடக்கு|முன்பதிவேற்றம்|சுவரொட்டி|மதிப்பு|தேவை)\\b"
         },
         {
           "name": "string.quoted.double.thtml",

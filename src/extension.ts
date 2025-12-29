@@ -6,9 +6,13 @@ import { compile, compileCSS } from './compiler';
 import { exec } from 'child_process';
 
 import { getLanguageFromExt, finalSupportedLanguages as supportedLanguages } from './config/languages';
+import { registerTranslationPanel } from './translationPanel';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Bharat HTML extension is now active!');
+
+    // Register Translation Panel
+    const translationPanel = registerTranslationPanel(context);
 
     // Helper to inline .tcss or .hcss files
     function processCssLinks(html: string, originalPath: string): string {
@@ -209,6 +213,81 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    // 3. Language Switcher Command
+    const switchLanguageCommand = vscode.commands.registerCommand('thtml.switchLanguage', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor');
+            return;
+        }
+
+        const currentLang = getLanguageFromExt(editor.document.fileName);
+        if (!currentLang) {
+            vscode.window.showErrorMessage('Current file is not a Bharat HTML/CSS file');
+            return;
+        }
+
+        // Show language picker
+        const items = supportedLanguages
+            .filter(l => l.code !== currentLang.code)
+            .map(l => ({
+                label: l.name,
+                description: `${l.htmlExt} / ${l.cssExt}`,
+                langConfig: l
+            }));
+
+        const selected = await vscode.window.showQuickPick(items, {
+            placeHolder: `Convert from ${currentLang.name} to...`
+        });
+
+        if (!selected) return;
+
+        const targetLang = selected.langConfig;
+
+        // Load both locales
+        const compiler = require('./compiler');
+        compiler.loadLocale(currentLang.code);
+        const sourceMap = { ...compiler.htmlMap };
+        
+        compiler.loadLocale(targetLang.code);
+        const targetMap = { ...compiler.htmlMap };
+
+        // Create reverse map (html -> native) for target
+        const reverseTargetMap: Record<string, string> = {};
+        for (const [native, eng] of Object.entries(targetMap)) {
+            reverseTargetMap[eng as string] = native;
+        }
+
+        // Convert the code
+        let convertedCode = editor.document.getText();
+        
+        for (const [sourceNative, englishTag] of Object.entries(sourceMap)) {
+            const targetNative = reverseTargetMap[englishTag as string];
+            if (targetNative) {
+                // Replace opening and closing tags
+                const regex = new RegExp(`<(\/?)${sourceNative.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([ >])`, 'g');
+                convertedCode = convertedCode.replace(regex, `<$1${targetNative}$2`);
+            }
+        }
+
+        // Create new file
+        const oldPath = editor.document.fileName;
+        const newExt = oldPath.endsWith(currentLang.htmlExt) ? targetLang.htmlExt : targetLang.cssExt;
+        const oldExt = oldPath.endsWith(currentLang.htmlExt) ? currentLang.htmlExt : currentLang.cssExt;
+        const newPath = oldPath.replace(oldExt, newExt);
+
+        await vscode.workspace.fs.writeFile(
+            vscode.Uri.file(newPath),
+            Buffer.from(convertedCode, 'utf8')
+        );
+
+        const doc = await vscode.workspace.openTextDocument(newPath);
+        await vscode.window.showTextDocument(doc);
+
+        vscode.window.showInformationMessage(`Converted ${currentLang.name} → ${targetLang.name}`);
+    });
+    context.subscriptions.push(switchLanguageCommand);
+
     // 5. Register IntelliSense for ALL Languages
     supportedLanguages.forEach(lang => {
         // HTML Provider
@@ -265,6 +344,356 @@ export function activate(context: vscode.ExtensionContext) {
             }
         );
         context.subscriptions.push(cssProvider);
+    });
+
+
+    // 5b. Hover Documentation for ALL Languages
+    supportedLanguages.forEach(lang => {
+        const hoverProvider = vscode.languages.registerHoverProvider(
+            lang.id,
+            {
+                provideHover(document: vscode.TextDocument, position: vscode.Position) {
+                    const compiler = require('./compiler');
+                    compiler.loadLocale(lang.code);
+
+                    const range = document.getWordRangeAtPosition(position);
+                    if (!range) return;
+
+                    const word = document.getText(range);
+                    const htmlTag = compiler.htmlMap[word];
+
+                    if (htmlTag) {
+                        const markdown = new vscode.MarkdownString();
+                        markdown.appendMarkdown(`**${word}** → \`<${htmlTag}>\`\n\n`);
+                        
+                        // Add descriptions for common tags
+                        const descriptions: Record<string, string> = {
+                            'html': 'The root element of an HTML document',
+                            'head': 'Contains metadata and document information',
+                            'title': 'Defines the document title shown in browser tab',
+                            'body': 'Contains the visible page content',
+                            'h1': 'Main heading (largest)',
+                            'p': 'Paragraph of text',
+                            'button': 'Clickable button element',
+                            'link': 'Links external resources like CSS files',
+                            'div': 'Generic container for grouping elements',
+                            'span': 'Inline container for text'
+                        };
+
+                        if (descriptions[htmlTag]) {
+                            markdown.appendMarkdown(`*${descriptions[htmlTag]}*`);
+                        }
+
+                        return new vscode.Hover(markdown);
+                    }
+
+                    return undefined;
+                }
+            }
+        );
+        context.subscriptions.push(hoverProvider);
+    });
+
+
+    // 5c. Code Actions - Quick Fix for English Tags
+    supportedLanguages.forEach(lang => {
+        const codeActionProvider = vscode.languages.registerCodeActionsProvider(
+            lang.id,
+            {
+                provideCodeActions(document: vscode.TextDocument, range: vscode.Range) {
+                    const compiler = require('./compiler');
+                    compiler.loadLocale(lang.code);
+
+                    // Create reverse map (english -> native)
+                    const reverseMap: Record<string, string> = {};
+                    for (const [native, eng] of Object.entries(compiler.htmlMap)) {
+                        reverseMap[eng as string] = native;
+                    }
+
+                    const line = document.lineAt(range.start.line);
+                    const actions: vscode.CodeAction[] = [];
+
+                    // Check for English tags
+                    const tagRegex = /<\/?(\w+)/g;
+                    let match;
+                    while ((match = tagRegex.exec(line.text)) !== null) {
+                        const englishTag = match[1];
+                        const nativeTag = reverseMap[englishTag];
+
+                        if (nativeTag && englishTag !== nativeTag) {
+                            const action = new vscode.CodeAction(
+                                `Convert to <${nativeTag}>`,
+                                vscode.CodeActionKind.QuickFix
+                            );
+
+                            action.edit = new vscode.WorkspaceEdit();
+                            const fullText = document.getText();
+                            const converted = fullText.replace(
+                                new RegExp(`<(\/?)${englishTag}([ >])`, 'g'),
+                                `<$1${nativeTag}$2`
+                            );
+                            
+                            action.edit.replace(
+                                document.uri,
+                                new vscode.Range(0, 0, document.lineCount, 0),
+                                converted
+                            );
+
+                            action.isPreferred = true;
+                            actions.push(action);
+                        }
+                    }
+
+                    return actions;
+                }
+            },
+            {
+                providedCodeActionKinds: [vscode.CodeActionKind.QuickFix]
+            }
+        );
+        context.subscriptions.push(codeActionProvider);
+    });
+
+
+    // 5d. Document Formatter - Auto-indent
+    supportedLanguages.forEach(lang => {
+        const formatter = vscode.languages.registerDocumentFormattingEditProvider(
+            lang.id,
+            {
+                provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+                    const text = document.getText();
+                    let formatted = '';
+                    let indent = 0;
+                    const indentSize = 2;
+
+                    const lines = text.split('\n');
+                    
+                    for (let line of lines) {
+                        const trimmed = line.trim();
+                        
+                        if (!trimmed) {
+                            formatted += '\n';
+                            continue;
+                        }
+
+                        // Check if this is a closing tag - decrease indent BEFORE adding line
+                        if (trimmed.startsWith('</')) {
+                            indent = Math.max(0, indent - indentSize);
+                        }
+
+                        // Add the indented line
+                        formatted += ' '.repeat(indent) + trimmed + '\n';
+
+                        // Check if this is an opening tag - increase indent AFTER adding line
+                        if (trimmed.startsWith('<') && !trimmed.startsWith('</')) {
+                            // Don't increase for self-closing tags or tags that close on same line
+                            if (!trimmed.endsWith('/>') && !trimmed.includes('</')) {
+                                // Extract tag name to check if it closes on same line
+                                const tagMatch = trimmed.match(/<(\S+)/);
+                                if (tagMatch) {
+                                    const tagName = tagMatch[1];
+                                    // Only increase indent if tag doesn't close on same line
+                                    if (!trimmed.includes(`</${tagName}>`)) {
+                                        indent += indentSize;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    const fullRange = new vscode.Range(
+                        0, 0,
+                        document.lineCount - 1,
+                        document.lineAt(document.lineCount - 1).text.length
+                    );
+
+                    return [vscode.TextEdit.replace(fullRange, formatted.trimEnd())];
+                }
+            }
+        );
+        context.subscriptions.push(formatter);
+    });
+
+
+    // 5e. Emmet-Style Abbreviations
+    supportedLanguages.forEach(lang => {
+        const emmetProvider = vscode.languages.registerCompletionItemProvider(
+            lang.id,
+            {
+                provideCompletionItems(document: vscode.TextDocument, position: vscode.Position) {
+                    const linePrefix = document.lineAt(position).text.substr(0, position.character);
+                    
+                    // Check if line contains emmet-like pattern (e.g., "page>head>title")
+                    const emmetPattern = /(\w+)(>(\w+))+$/;
+                    const match = linePrefix.match(emmetPattern);
+                    
+                    if (!match) return undefined;
+
+                    const compiler = require('./compiler');
+                    compiler.loadLocale(lang.code);
+
+                    // Create reverse map (english -> native)
+                    const reverseMap: Record<string, string> = {};
+                    for (const [native, eng] of Object.entries(compiler.htmlMap)) {
+                        reverseMap[eng as string] = native;
+                    }
+
+                    // Add common aliases for better UX
+                    const aliases: Record<string, string> = {
+                        'page': reverseMap['html'] || 'html',
+                        'para': reverseMap['p'] || 'p',
+                        'btn': reverseMap['button'] || 'button',
+                        'heading': reverseMap['h1'] || 'h1',
+                        'heading1': reverseMap['h1'] || 'h1',
+                        'heading2': reverseMap['h2'] || 'h2',
+                        'heading3': reverseMap['h3'] || 'h3'
+                    };
+
+                    // Merge aliases into reverse map
+                    Object.assign(reverseMap, aliases);
+
+                    // Parse the abbreviation
+                    const abbr = match[0];
+                    const tags = abbr.split('>');
+                    
+                    // Generate nested HTML
+                    let html = '';
+                    let indent = 0;
+                    const indentSize = 2;
+
+                    // Opening tags
+                    for (let i = 0; i < tags.length; i++) {
+                        const englishTag = tags[i];
+                        const nativeTag = reverseMap[englishTag] || englishTag;
+                        
+                        html += ' '.repeat(indent) + `<${nativeTag}>`;
+                        if (i < tags.length - 1) {
+                            html += '\n';
+                            indent += indentSize;
+                        }
+                    }
+
+                    // Cursor position in the innermost tag
+                    html += '$0';
+
+                    // Closing tags in reverse
+                    for (let i = tags.length - 1; i >= 0; i--) {
+                        const englishTag = tags[i];
+                        const nativeTag = reverseMap[englishTag] || englishTag;
+                        
+                        if (i === tags.length - 1) {
+                            html += `</${nativeTag}>`;
+                        } else {
+                            indent -= indentSize;
+                            html += '\n' + ' '.repeat(indent) + `</${nativeTag}>`;
+                        }
+                    }
+
+                    const completionItem = new vscode.CompletionItem(
+                        abbr,
+                        vscode.CompletionItemKind.Snippet
+                    );
+                    
+                    completionItem.insertText = new vscode.SnippetString(html);
+                    completionItem.documentation = new vscode.MarkdownString(`Expand to nested ${lang.name} HTML structure`);
+                    completionItem.detail = 'Emmet-style expansion';
+                    
+                    // Important: Set the range to replace the abbreviation
+                    const startPos = new vscode.Position(position.line, position.character - abbr.length);
+                    completionItem.range = new vscode.Range(startPos, position);
+
+                    return [completionItem];
+                }
+            },
+            '>' // Trigger on '>'
+        );
+        context.subscriptions.push(emmetProvider);
+    });
+
+
+    // 5f. Color Picker for CSS
+    const parseHexColor = (hex: string): vscode.Color | null => {
+        const match = hex.match(/#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})/);
+        if (!match) return null;
+
+        let hexValue = match[1];
+        if (hexValue.length === 3) {
+            hexValue = hexValue.split('').map(c => c + c).join('');
+        }
+
+        const r = parseInt(hexValue.substr(0, 2), 16) / 255;
+        const g = parseInt(hexValue.substr(2, 2), 16) / 255;
+        const b = parseInt(hexValue.substr(4, 2), 16) / 255;
+
+        return new vscode.Color(r, g, b, 1);
+    };
+
+    supportedLanguages.forEach(lang => {
+        const colorProvider = vscode.languages.registerColorProvider(
+            lang.cssId,
+            {
+                provideDocumentColors(document: vscode.TextDocument): vscode.ColorInformation[] {
+                    const text = document.getText();
+                    const colors: vscode.ColorInformation[] = [];
+
+                    // Match hex colors
+                    const hexRegex = /#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})\b/g;
+                    let match;
+                    while ((match = hexRegex.exec(text)) !== null) {
+                        const color = parseHexColor(match[0]);
+                        if (color) {
+                            const startPos = document.positionAt(match.index);
+                            const endPos = document.positionAt(match.index + match[0].length);
+                            colors.push(new vscode.ColorInformation(
+                                new vscode.Range(startPos, endPos),
+                                color
+                            ));
+                        }
+                    }
+
+                    // Match rgb/rgba
+                    const rgbRegex = /rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/g;
+                    while ((match = rgbRegex.exec(text)) !== null) {
+                        const r = parseInt(match[1]) / 255;
+                        const g = parseInt(match[2]) / 255;
+                        const b = parseInt(match[3]) / 255;
+                        const a = match[4] ? parseFloat(match[4]) : 1;
+                        
+                        const startPos = document.positionAt(match.index);
+                        const endPos = document.positionAt(match.index + match[0].length);
+                        colors.push(new vscode.ColorInformation(
+                            new vscode.Range(startPos, endPos),
+                            new vscode.Color(r, g, b, a)
+                        ));
+                    }
+
+                    return colors;
+                },
+
+                provideColorPresentations(color: vscode.Color): vscode.ColorPresentation[] {
+                    const r = Math.round(color.red * 255);
+                    const g = Math.round(color.green * 255);
+                    const b = Math.round(color.blue * 255);
+                    const a = color.alpha;
+
+                    const presentations: vscode.ColorPresentation[] = [];
+
+                    // Hex
+                    const hex = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                    presentations.push(new vscode.ColorPresentation(hex));
+
+                    // RGB
+                    if (a === 1) {
+                        presentations.push(new vscode.ColorPresentation(`rgb(${r}, ${g}, ${b})`));
+                    } else {
+                        presentations.push(new vscode.ColorPresentation(`rgba(${r}, ${g}, ${b}, ${a})`));
+                    }
+
+                    return presentations;
+                }
+            }
+        );
+        context.subscriptions.push(colorProvider);
     });
 
 
@@ -330,6 +759,45 @@ export function activate(context: vscode.ExtensionContext) {
     if (vscode.window.activeTextEditor) {
         updateDiagnostics(vscode.window.activeTextEditor.document, diagnosticCollection);
     }
+
+    // 7. Auto-Import CSS - Suggest creating CSS file
+    const createCssWatcher = vscode.workspace.onDidCreateFiles(async (event) => {
+        for (const file of event.files) {
+            const langConfig = getLanguageFromExt(file.fsPath);
+            if (langConfig && file.fsPath.endsWith(langConfig.htmlExt)) {
+                const dir = path.dirname(file.fsPath);
+                const baseName = path.basename(file.fsPath, langConfig.htmlExt);
+                const cssPath = path.join(dir, `${baseName}${langConfig.cssExt}`);
+
+                // Check if CSS file already exists
+                try {
+                    await vscode.workspace.fs.stat(vscode.Uri.file(cssPath));
+                } catch {
+                    // CSS doesn't exist, prompt user
+                    const answer = await vscode.window.showInformationMessage(
+                        `Create matching ${langConfig.name} CSS file?`,
+                        'Yes',
+                        'No'
+                    );
+
+                    if (answer === 'Yes') {
+                        const compiler = require('./compiler');
+                        compiler.loadLocale(langConfig.code);
+                        
+                        const cssTemplate = `/* ${langConfig.name} CSS */\n\n${Object.keys(compiler.htmlMap)[3] || 'body'} {\n  ${Object.keys(compiler.cssMap)[1] || 'background-color'}: #f0f0f0;\n}\n`;
+                        
+                        await vscode.workspace.fs.writeFile(
+                            vscode.Uri.file(cssPath),
+                            Buffer.from(cssTemplate, 'utf8')
+                        );
+
+                        vscode.window.showInformationMessage(`Created ${path.basename(cssPath)}`);
+                    }
+                }
+            }
+        }
+    });
+    context.subscriptions.push(createCssWatcher);
 }
 
 export function deactivate() {}

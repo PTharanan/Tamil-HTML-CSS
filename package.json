@@ -413,6 +413,11 @@
         "command": "thtml.preview",
         "title": "Live Preview Bharat HTML",
         "icon": "$(open-preview)"
+      },
+      {
+        "command": "thtml.switchLanguage",
+        "title": "Switch Language",
+        "icon": "$(globe)"
       }
     ],
     "menus": {
@@ -426,6 +431,21 @@
           "command": "thtml.preview",
           "when": "resourceLangId == thtml || resourceLangId == hhtml || resourceLangId == bnhtml || resourceLangId == tehtml || resourceLangId == mrhtml || resourceLangId == urhtml || resourceLangId == guhtml || resourceLangId == knhtml || resourceLangId == orhtml || resourceLangId == mlhtml || resourceLangId == pahtml || resourceLangId == ashtml || resourceLangId == maihtml || resourceLangId == sathtml || resourceLangId == kshtml || resourceLangId == nehtml || resourceLangId == kokhtml || resourceLangId == sdhtml || resourceLangId == doihtml || resourceLangId == mnihtml || resourceLangId == brxhtml || resourceLangId == sahtml || resourceLangId == souhtml",
           "group": "navigation"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "thtml.switchLanguage",
+          "when": "resourceLangId == thtml || resourceLangId == hhtml || resourceLangId == bnhtml || resourceLangId == tehtml || resourceLangId == mrhtml || resourceLangId == urhtml || resourceLangId == guhtml || resourceLangId == knhtml || resourceLangId == orhtml || resourceLangId == mlhtml || resourceLangId == pahtml || resourceLangId == ashtml || resourceLangId == maihtml || resourceLangId == sathtml || resourceLangId == kshtml || resourceLangId == nehtml || resourceLangId == kokhtml || resourceLangId == sdhtml || resourceLangId == doihtml || resourceLangId == mnihtml || resourceLangId == brxhtml || resourceLangId == sahtml || resourceLangId == souhtml",
+          "group": "1_modification"
+        }
+      ]
+    },
+    "views": {
+      "explorer": [
+        {
+          "id": "bharatTranslations",
+          "name": "Bharat Translations"
         }
       ]
     },

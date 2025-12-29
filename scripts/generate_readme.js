@@ -57,12 +57,23 @@ let readmeContent = `# Bharat HTML/CSS - Unified Indian Coding Platform 🇮🇳
 
 ## ✨ Features
 
+### **Core Coding Features**
 *   **Native Coding**: Write standard HTML5 and CSS3 using your mother tongue.
 *   **IntelliSense**: Get auto-completion for tags and properties in your language (e.g., type \`<\` in a Tamil file to see \`தலை\`, \`உடல்\`).
 *   **Snippets**: Type \`!\` and press \`Tab\` to generate a full boilerplate code structure.
 *   **Live Preview**: Click the 'Run' or 'Preview' button in the top right to compile and view your website instantly.
 *   **Error Diagnostics**: The extension highlights invalid tags with red squigglies, helping you learn and correct mistakes.
 *   **Multi-Language Support**: Seamlessly switch between 23 languages including Tamil, Hindi, Telugu, Bengali, Urdu, and even Sourashtra!
+
+### **Advanced IDE Features** 🔥
+*   **Hover Documentation**: Hover over any tag to see its English equivalent and description
+*   **Auto-Import CSS**: When creating an HTML file, automatically prompts to create matching CSS file
+*   **Language Switcher**: Convert your code between any of the 23 languages instantly (Right-click → Switch Language)
+*   **Code Actions**: Type English tags and get quick-fix suggestions to convert to native (💡 lightbulb)
+*   **Document Formatter**: Press \`Shift+Alt+F\` to auto-format and indent your code perfectly
+*   **Translation Panel**: Sidebar panel showing English ↔ Native mappings for all tags and properties
+*   **Emmet Support**: Type abbreviations like \`page>head>title\` and expand to full nested structure
+*   **Color Picker**: Visual color selection in CSS files - click on any color to open the picker
 
 ## 📸 Demo
 
